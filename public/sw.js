@@ -1,4 +1,27 @@
-const CACHE='busan-family-v3';
-self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(['./','./index.html','./manifest.webmanifest','./images/hero-desktop.png','./images/hero-mobile.png'])).then(()=>self.skipWaiting()))});
-self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('busan-family-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
-self.addEventListener('fetch',event=>{const req=event.request;if(req.method!=='GET'||new URL(req.url).origin!==self.location.origin)return;event.respondWith(fetch(req).then(resp=>{if(resp.ok){const copy=resp.clone();caches.open(CACHE).then(c=>c.put(req,copy))}return resp}).catch(()=>caches.match(req).then(r=>r||caches.match('./index.html'))))});
+const CACHE = 'busan-family-v5';
+const ROOT = self.registration.scope; // /BusanTravel/ on GitHub Pages, / during local preview
+const initial = ['','index.html','manifest.webmanifest','images/hero-desktop.png',
+  'images/hero-mobile.png','icons/icon-192.png','icons/icon-512.png'];
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE).then(c => c.addAll(initial.map(x => ROOT + x))).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', event => {
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('busan-family-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+});
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  const url = new URL(request.url);
+  // Never cache third-party resources, API responses, or resources outside this PWA's scope.
+  if (request.method !== 'GET' || url.origin !== self.location.origin || !url.href.startsWith(ROOT)) return;
+  if (request.mode === 'navigate') {
+    event.respondWith(fetch(request).then(response => {
+      if (response.ok) caches.open(CACHE).then(c => c.put(request, response.clone()));
+      return response;
+    }).catch(async () => (await caches.match(request)) || caches.match(ROOT + 'index.html')));
+    return;
+  }
+  event.respondWith(caches.match(request).then(cached => cached || fetch(request).then(response => {
+    if (response.ok && response.type === 'basic') caches.open(CACHE).then(c => c.put(request, response.clone()));
+    return response;
+  })));
+});

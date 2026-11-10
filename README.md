@@ -1,6 +1,6 @@
-# 🧸 釜山一家三口旅行手帳｜Busan Family Trip V4
+# 🧸 釜山一家三口旅行手帳｜Busan Family Trip V5
 
-> **2026/11/13–11/17 · 五天四夜 · React 19 / Vite 7 / RWD / PWA**  
+> **2026/11/13–11/17 · 五天四夜 · React 19 / Vite 7 / RWD / PWA / 天氣預報**  
 > 為爸爸、媽媽與一位 **5 歲、112 cm** 的小男孩設計的 Q 版旅行行程網站。整合每日時間軸、景點示意地圖、交通建議、韓文地址、行程提醒與親子工具箱。
 
 **GitHub Pages 網站網址（部署成功後）**：https://lvb0799.github.io/BusanTravel/  
@@ -43,6 +43,7 @@
 
 | 功能 | 使用情境 | 備註 |
 | --- | --- | --- |
+| 釜山天氣預報 | 查詢 5 天行程的氣溫、降雨機率、最大風速與穿搭提醒 | 使用 Open-Meteo API，無需 API Key；超出預報日期顯示待更新 |
 | Q 版首頁 | 開啟網站時顯示旅行主題 | 橫式／直式圖片依畫面尺寸呈現 |
 | 五日切換 | 點 DAY 1～DAY 5 查看不同日期 | 所有行程資料來自 `src/data.js` |
 | 今日旅遊模式 | 查看韓國時間、預計下一站及當天完成進度 | **依時間表和打卡推估**，不是 GPS 定位 |
@@ -67,6 +68,7 @@
 | 語言 | JavaScript + JSX | 目前**不是 TypeScript** 專案 |
 | UI 動畫 | **Framer Motion 12** | 時間軸與景點細節切換動畫 |
 | 地圖元件 | **React Leaflet 5 / Leaflet 1.9** | 圖釘、連線、縮放及地圖視圖 |
+| 天氣 API | Open-Meteo Forecast API | 釜山市區預報，30 分鐘本機快取；未連網顯示舊預報提示 |
 | 地圖底圖 | OpenStreetMap 公開圖磚 | 網路地圖畫面，需遵守服務使用政策 |
 | 圖示 | **Lucide React** | 導覽及交通小圖示 |
 | 樣式 | 原生 CSS + Media Queries | RWD、手機底部選單及安全區域 |
@@ -89,6 +91,7 @@ flowchart TD
     UI --> NAVER[Naver Map 搜尋網頁]
     HOOKS --> LS[瀏覽器 localStorage]
     APP --> SW[Service Worker：靜態資源快取]
+    UI --> WX[Open-Meteo：釜山每日預報]
 ```
 
 **資料流重點**：`App.jsx` 管理日期、選取景點與手機地圖開關；`data.js` 是主要靜態行程資料源；`useTripProgress` 與 `useLocalSettings` 將資料寫入瀏覽器本機。沒有帳號登入、多人同步或伺服器資料寫入。
@@ -616,3 +619,76 @@ sudo systemctl reload nginx
 ---
 
 **備註**：本文件依 V4 專案實際原始碼與目前預填的五日行程撰寫。出發前務必核對兩間住宿、航班、營業時間及親子活動規定。祝一家三口釜山旅遊平安順利！🌊
+
+
+---
+
+## 13. V5 新增：天氣預報與 GitHub Pages 修正
+
+### 13.1 釜山天氣預報（Open-Meteo）
+
+- 入口位於 **Q 版首頁插畫下方的「釜山天氣小幫手」**，直接選擇 DAY 1–5。
+- 每天提供 **最高／最低氣溫（°C）、降雨機率（%）、最大風速（km/h）、天氣圖示**，並根據冷暖、降雨及強風提供穿著及戶外備案提醒。
+- 資料來源為 [Open-Meteo Forecast API](https://open-meteo.com/en/docs)，使用釜山市區約略座標 `35.1796, 129.0756`、`timezone=Asia/Seoul`、`forecast_days=16`，**不需要 API Key**。
+- 預報只在氣象服務能提供的日期範圍內出現。若超出預報範圍，顯示「待更新」，**絕不以假數字補齊**。
+- 每 30 分鐘優先重用瀏覽器 `localStorage` 快取；按「更新」可強制重新取得。若取得失敗但曾快取過資料，會標註**舊預報**；第一次連線失敗則顯示錯誤。
+- 此功能需網路連線（或使用上次快取資料）；**不是即時氣象觀測，亦不會自動修改你的行程**。
+- 程式位置：`src/services/weatherService.js`（API、快取、氣象警示）、`src/hooks/useBusanWeather.js`（載入狀態）、`src/components/WeatherForecast.jsx`（UI）。
+
+### 13.2 GitHub Pages：已改好子路徑
+
+正式站預期網址：**https://lvb0799.github.io/BusanTravel/**  
+Repository：**https://github.com/lvb0799/BusanTravel**
+
+這一版已**實際修改原始碼**，不只是文件：
+
+| 檔案 | 設定 |
+| --- | --- |
+| `vite.config.js` | `base: '/BusanTravel/'` |
+| `index.html` | Manifest 與 Apple touch icon 使用 Vite `%BASE_URL%` |
+| `src/components/Hero.jsx` | 桌機／手機圖片使用 `import.meta.env.BASE_URL`（保留） |
+| `src/main.jsx` | Service Worker 註冊使用 `import.meta.env.BASE_URL`（保留） |
+| `public/manifest.webmanifest` | `start_url`、`scope` 和 icon 皆為相對 Manifest 路徑（保留） |
+| `public/sw.js` | 快取從 `self.registration.scope`（即 `/BusanTravel/`）計算，快取版本更新為 V5 |
+| `.github/workflows/deploy.yml` | **新增** Push `main` 後安裝、編譯、上傳 `dist` 並部署 Pages |
+
+**首次部署：**
+
+1. 將本 ZIP **所有內容（包含隱藏 `.github` 資料夾）** 放入 Repository 根目錄。確保 GitHub 上 `package.json`、`vite.config.js` 與 `src/` 位於根目錄，不能多包一層 `busan-cute-trip/`。
+2. 使用 GitHub Desktop Commit、Push 到 `main`。
+3. 在 [Settings → Pages](https://github.com/lvb0799/BusanTravel/settings/pages) 設定 **Source = GitHub Actions**。
+4. 進入 [Actions](https://github.com/lvb0799/BusanTravel/actions) 確認 `Deploy BusanTravel to GitHub Pages` 執行成功（綠勾）。
+5. 開啟 https://lvb0799.github.io/BusanTravel/ 。若 404，先確認 Actions 是否成功、Source 是否選 GitHub Actions，以及 GitHub Actions 權限。
+
+**資源路徑檢查**：
+
+- https://lvb0799.github.io/BusanTravel/manifest.webmanifest
+- https://lvb0799.github.io/BusanTravel/sw.js
+- https://lvb0799.github.io/BusanTravel/images/hero-desktop.png
+- https://lvb0799.github.io/BusanTravel/images/hero-mobile.png
+- https://lvb0799.github.io/BusanTravel/icons/icon-192.png
+
+**本機開發**：在 Vite `base` 設定為 `/BusanTravel/` 後，請使用 Vite 顯示的網址（通常為 `http://localhost:5173/BusanTravel/`）開啟，而不是假設網站仍位於 `/`。執行 `npm run build` 後檢查 `dist/index.html` 中的資源連結，應以 `/BusanTravel/` 開頭。
+
+**PWA 注意**：Service Worker 僅於正式 production build 註冊；若更新後仍看到舊首頁，可在 Chrome DevTools → Application → Service Workers 取消註冊舊 Worker，並清除舊站點快取再重載。GitHub Pages 使用 HTTPS，符合 PWA 所需安全來源條件。
+
+### 13.3 更新版專案目錄
+
+```text
+BusanTravel/
+├── .github/workflows/deploy.yml       # GitHub Actions 自動部署
+├── public/
+│   ├── manifest.webmanifest
+│   ├── sw.js
+│   ├── icons/
+│   └── images/
+├── src/
+│   ├── components/WeatherForecast.jsx # 天氣卡片 + DAY 1–5
+│   ├── hooks/useBusanWeather.js        # 天氣載入 Hook
+│   ├── services/weatherService.js      # Open-Meteo / 本機快取
+│   └── ...                             # 保留原有五日行程 / 地圖 / 工具箱
+├── index.html
+├── vite.config.js
+├── package.json
+└── README.md
+```
