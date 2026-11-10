@@ -1,0 +1,21 @@
+{
+  "name": "釜山一家三口旅遊手帳",
+  "short_name": "釜山旅行",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbf7f3",
+  "theme_color": "#f2a3a1",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

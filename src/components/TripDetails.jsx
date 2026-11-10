@@ -1,0 +1,14 @@
+import React,{useState,useEffect} from 'react';
+import {AnimatePresence,motion} from 'framer-motion';
+import {Route,Info,Navigation,ExternalLink,Copy,Check} from 'lucide-react';
+import {places,modeMeta} from '../data';
+import {ModeIcon} from './Timeline';
+import {naverSearchUrl} from '../utils/travel';
+export default function TripDetails({day,selected,stop,settings}){
+ const [tab,setTab]=useState('route');const [copied,setCopied]=useState(false);
+ useEffect(()=>{setTab('route');setCopied(false)},[day,selected]);
+ const place=stop?places[stop.place]:null;
+ const address=place?.name==='Daisy House'?(settings?.daisyAddress||place.address):place?.name==='Hotel Central Bay Gwangalli'?(settings?.centralBayAddress||place.address):place?.address;
+ const copy=async()=>{try{await navigator.clipboard.writeText(address||place.ko);setCopied(true)}catch{}};
+ return <AnimatePresence mode="wait"><motion.div key={`${day}-${selected??'default'}`} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}} transition={{duration:.22}} className="detail-card">{stop?<><div className="detail-top"><div className="detail-emoji">{place?.emoji||'📍'}</div><div><span className="detail-kicker">{stop.time} · STOP {selected+1}</span><h3>{stop.title}</h3><p lang="ko">{place?.ko}</p></div></div><div className="detail-tabs"><button type="button" className={tab==='route'?'active':''} onClick={()=>setTab('route')}><Route size={15}/> 交通攻略</button><button type="button" className={tab==='tips'?'active':''} onClick={()=>setTab('tips')}><Info size={15}/> 景點筆記</button></div>{tab==='route'?<div className="detail-body"><div className="transit-row"><span className="transit-chip" style={{'--chip-color':modeMeta[stop.mode].color}}>{React.createElement(ModeIcon[stop.mode],{size:15})}{modeMeta[stop.mode].name}</span><b>{stop.duration}</b></div><p>{stop.transit}</p>{stop.note&&<div className="alert-note">⚠️ {stop.note}</div>}</div>:<div className="detail-body"><p>{stop.desc}</p>{stop.optional&&<div className="alert-note">✨ 這是彈性加碼行程。</div>}</div>}{place&&<div className="address-box"><span>韓文名稱 / 地址 {place.mapApprox?"（地圖圖釘為區域示意）":""}</span><strong lang="ko">{address||place.ko}</strong>{!address&&<small>目前為景區／站點名稱，非正式門牌地址</small>}<button type="button" onClick={copy}>{copied?<Check size={15}/>:<Copy size={15}/>} {copied?'已複製':'複製給司機／店家'}</button></div>}{place&&<a className="naver-link" href={naverSearchUrl(address?{ko:address}:place)} target="_blank" rel="noopener noreferrer"><Navigation size={15}/> 在 Naver Map 搜尋景點 <ExternalLink size={14}/></a>}<p className="naver-disclaimer">導航按鈕會開啟 Naver 搜尋目的地；請在地圖 App 再選路線、起點與交通方式。</p></>:<div className="detail-default"><div className="detail-default-emoji">📮</div><span className="tiny-kicker">TRIP POSTCARD</span><h3>下一站去哪裡？</h3><p>點選時間軸或地圖圖釘，就能看到建議交通方式、韓文地址與景點資訊。</p><div className="postcard-stamps"><span>🌊 海風</span><span>🍢 小吃</span><span>📷 回憶</span></div></div>}</motion.div></AnimatePresence>;
+}
