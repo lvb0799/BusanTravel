@@ -3,6 +3,10 @@
 > **2026/11/13–11/17 · 五天四夜 · React 19 / Vite 7 / RWD / PWA**  
 > 為爸爸、媽媽與一位 **5 歲、112 cm** 的小男孩設計的 Q 版旅行行程網站。整合每日時間軸、景點示意地圖、交通建議、韓文地址、行程提醒與親子工具箱。
 
+**GitHub Pages 網站網址（部署成功後）**：https://lvb0799.github.io/BusanTravel/  
+**GitHub Repository**：https://github.com/lvb0799/BusanTravel  
+> 如果網站目前顯示 404，代表尚需確認 GitHub Pages 的發布設定及 GitHub Actions 部署結果；此網址不是已上線的保證。
+
 ---
 
 ## 目錄
@@ -495,11 +499,36 @@ sudo systemctl reload nginx
 
 ### 9.4 部署到 GitHub Pages
 
-1. 建立 GitHub repository。
-2. 執行 `npm run build`。
-3. 用 GitHub Actions 或 Pages 的部署流程發布 `dist/` 內容。
-4. 目前 `vite.config.js` 設為 `base: './'`，採**相對資源路徑**，對子資料夾式靜態部署較友善；仍應檢查實際 Pages URL、PWA `start_url` 和 Service Worker 範圍。
-5. 部署完成後用手機實機測試首頁圖片、Leaflet、導航外連及 PWA 安裝。
+**本專案 GitHub Pages 預期網址**：https://lvb0799.github.io/BusanTravel/  
+**GitHub Repository**：https://github.com/lvb0799/BusanTravel  
+**Actions 執行紀錄**：https://github.com/lvb0799/BusanTravel/actions  
+**Pages 設定頁**：https://github.com/lvb0799/BusanTravel/settings/pages
+
+> 若開啟 Pages 網址看到 **404**，請先檢查 Pages 是否成功發布；僅上傳 React 原始碼不會自動產生 `dist/` 網站。
+
+1. 將 `vite.config.js` 的 `base` 設成 **`'/BusanTravel/'`**（大小寫需與 Repository 一致），例如：
+
+   ```javascript
+   import { defineConfig } from 'vite';
+   import react from '@vitejs/plugin-react';
+
+   export default defineConfig({
+     plugins: [react()],
+     base: '/BusanTravel/',
+   });
+   ```
+
+2. 在 GitHub Repository → **Settings → Pages → Build and deployment** 將 **Source** 選為 **GitHub Actions**。
+3. 建立 `.github/workflows/deploy.yml`，讓 GitHub Actions 在 Push 至 `main` 時執行 `npm ci`（專案需先提交 `package-lock.json`）、`npm run build`，並發布 `dist/`。
+4. 推送程式碼後前往 **Actions 執行紀錄**，確認建置與部署工作都成功（綠色）。
+5. 使用正式網址檢查以下項目：
+   - 首頁：`https://lvb0799.github.io/BusanTravel/`
+   - Manifest：`https://lvb0799.github.io/BusanTravel/manifest.webmanifest`
+   - Service Worker：`https://lvb0799.github.io/BusanTravel/sw.js`
+   - 首頁圖片與 PWA Icon：檢查瀏覽器 Network 面板是否有 404。
+6. 手機實測 RWD、地圖、Naver Map 外部連結、住宿編輯，以及 PWA 加入主畫面。**PWA 不代表可以離線使用即時導航**。
+
+**注意**：上述操作是部署指引；本次只更新 README，沒有修改 `vite.config.js` 或建立 GitHub Actions 工作流程。因此如果尚未另行設定，重新上傳 README 並不會解決 404。
 
 ### 9.5 更新網站版本後看不到新內容？
 
